@@ -1,0 +1,5 @@
+# 忽略第三方产物和构建目录
+node_modules/
+dist/
+public/charting_library/
+*.log 

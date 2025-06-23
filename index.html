@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Professional trading app with real-time crypto data and TradingView charts"
+    />
+    <meta name="theme-color" content="#3b82f6" />
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' https://cdn.jsdelivr.net https://unpkg.com https://s3.tradingview.com 'unsafe-inline';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' data: blob: https://s3.tradingview.com https://*.tradingview.com;
+      font-src 'self' https://fonts.gstatic.com;
+      frame-src 'self' blob: https://s.tradingview.com https://*.tradingview.com;
+      connect-src 'self' wss://stream.binance.com:9443 https://api.binance.com https://s.tradingview.com https://*.tradingview.com http://localhost:5173;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    "/>
+    <title>Trading App</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
