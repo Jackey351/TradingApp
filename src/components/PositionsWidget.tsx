@@ -1,7 +1,7 @@
 import { useExchangeStore } from '../stores/exchangeStore';
 import { useMarketStore } from '../stores/marketStore';
 import { Position } from '../types';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useCalcWorker } from '@/hooks/useCalcWorker';
 
 const PositionsWidget = () => {
@@ -10,7 +10,10 @@ const PositionsWidget = () => {
   const { calcPnL } = useCalcWorker();
 
   // Only show positions for the selected trading pair
-  const filteredPositions = positions.filter((p) => p.symbol === selectedPair);
+  const filteredPositions = useMemo(
+    () => positions.filter((p) => p.symbol === selectedPair),
+    [positions, selectedPair]
+  );
 
   // Get latest mark price
   const markPrice =
@@ -20,6 +23,14 @@ const PositionsWidget = () => {
   const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
 
   const [pnlPositions, setPnLPositions] = useState<any[]>([]);
+
+  const pnlMap = useMemo(() => {
+    const map = new Map<string, { pnl: number; pnlPercent: number }>();
+    pnlPositions.forEach((p) => {
+      map.set(`${p.symbol}_${p.side}`, p);
+    });
+    return map;
+  }, [pnlPositions]);
 
   useEffect(() => {
     if (!filteredPositions.length || !markPrice) return;
@@ -38,17 +49,14 @@ const PositionsWidget = () => {
   }, [filteredPositions, markPrice]);
 
   const renderPositionRow = (position: Position, idx: number) => {
-    // 查找 worker 计算后的 PnL
-    const pnlData = pnlPositions.find(
-      (p) => p.symbol === position.symbol && p.side === position.side
-    );
+    const pnlData = pnlMap.get(`${position.symbol}_${position.side}`);
     const pnl = pnlData?.pnl ?? 0;
     const pnlPercent = pnlData?.pnlPercent ?? 0;
+
     return (
       <tr
         key={position.symbol + position.side}
         role="row"
-        tabIndex={0}
         ref={(el) => (rowRefs.current[idx] = el)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
