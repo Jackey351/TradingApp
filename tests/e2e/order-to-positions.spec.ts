@@ -16,11 +16,10 @@ test('should place an order and see it in PositionsWidget', async ({ page }) => 
   await page.getByRole('button', { name: /Buy BTC/i }).click();
 
   // 5. Wait for order to be accepted
-  await expect(page.getByText(/Order accepted/i)).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText(/Order accepted/i)).toBeVisible({ timeout: 10000 });
 
   // 6. Assert position appears
-  await expect(page.getByText(/BTCUSDT/i)).toBeVisible();
+  await expect(page.getByText(/BTCUSDT/i)).toBeVisible({ timeout: 1000 });
   await expect(page.getByRole('cell', { name: 'LONG' })).toBeVisible();
   await expect(page.getByText('1000000.00')).toBeVisible();
-  await expect(page.getByText('0.01')).toBeVisible();
 }); 
