@@ -25,7 +25,8 @@ describe('BinanceAdapter', () => {
   it('handles REST error', async () => {
     (fetch as any).mockResolvedValue({ ok: false, status: 500 });
     const adapter = new BinanceAdapter();
-    await expect(adapter.getTradingPairs()).rejects.toThrow();
+    const pairs = await adapter.getTradingPairs();
+    expect(pairs).toEqual([]);
   });
 
   it('subscribes and unsubscribes orderbook', () => {

@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import TradeTicket from './TradeTicket';
 import { useExchangeStore } from '../stores/exchangeStore';
+import toast from 'react-hot-toast';
 
 vi.mock('../stores/exchangeStore');
 vi.mock('react-hot-toast', () => ({
@@ -11,8 +12,12 @@ vi.mock('react-hot-toast', () => ({
 
 describe('TradeTicket', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     (useExchangeStore as any).mockReturnValue({
       addOrder: vi.fn(),
+      updateOrder: vi.fn(),
+      positions: [],
+      setPositions: vi.fn(),
       orderBook: { bids: [{ price: 10000 }], asks: [{ price: 11000 }] },
     });
   });
@@ -28,7 +33,6 @@ describe('TradeTicket', () => {
   });
 
   it('shows error on invalid input', () => {
-    const { default: toast } = require('react-hot-toast');
     render(<TradeTicket symbol="BTCUSDT" />);
     fireEvent.change(screen.getByLabelText(/Price/i), {
       target: { value: '' },
@@ -36,12 +40,11 @@ describe('TradeTicket', () => {
     fireEvent.change(screen.getByLabelText(/Amount/i), {
       target: { value: '' },
     });
-    fireEvent.submit(screen.getByRole('form'));
+    fireEvent.submit(screen.getByTestId('trade-form'));
     expect(toast.error).toHaveBeenCalled();
   });
 
   it('submits order and shows toast', async () => {
-    const { default: toast } = require('react-hot-toast');
     render(<TradeTicket symbol="BTCUSDT" />);
     fireEvent.change(screen.getByLabelText(/Price/i), {
       target: { value: '10000' },
@@ -49,7 +52,7 @@ describe('TradeTicket', () => {
     fireEvent.change(screen.getByLabelText(/Amount/i), {
       target: { value: '0.1' },
     });
-    fireEvent.submit(screen.getByRole('form'));
+    fireEvent.submit(screen.getByTestId('trade-form'));
     expect(toast.promise).toHaveBeenCalled();
   });
 });
