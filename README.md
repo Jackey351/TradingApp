@@ -23,7 +23,62 @@ The application is built with a modular and scalable architecture, separating UI
 
 ## Architecture Diagram
 
-![Architecture Diagram](public/images/image.png)
+```mermaid
+flowchart TD
+  subgraph UI[User Interface]
+    A1[InstrumentSelector]
+    A2[TradingViewChart]
+    A3[OrderBook]
+    A4[TradeTicket]
+    A5[PositionsWidget]
+    A6[OpenOrdersWidget]
+    A7[ThemeToggle]
+  end
+
+  subgraph Store[Zustand Stores]
+    S1[marketStore - orderBook, klines]
+    S2[exchangeStore - positions, orders, selectedPair]
+  end
+
+  subgraph Adapters[Exchange Adapters]
+    AD1[ExchangeAdapter - interface]
+    AD2[BinanceAdapter - REST, WS]
+  end
+
+  subgraph Worker[Web Worker]
+    W1[calcWorker - orderBook aggregation, PnL calculation]
+  end
+
+  subgraph External[External Services]
+    E1[Binance API - REST, WS]
+    E3[TradingView Charting Library]
+  end
+
+  %% UI <-> Store
+  A1 -- subscribe/update --> S2
+  A2 -- subscribe/update --> S2
+  A3 -- subscribe/update --> S1
+  A4 -- subscribe/update --> S2
+  A5 -- subscribe/update --> S2
+  A6 -- subscribe/update --> S2
+  A7 -- subscribe/update --> S2
+
+  %% Store <-> Adapters
+  S1 -- fetch/subscribe data --> AD2
+  S2 -- fetch/subscribe data --> AD2
+
+  %% Adapters <-> External
+  AD2 -- REST/WS --> E1
+
+  %% Store <-> Worker
+  S1 -- aggregation/calc request --> W1
+  S2 -- PnL calc request --> W1
+  W1 -- result --> S1
+  W1 -- result --> S2
+
+  %% UI <-> TradingView
+  A2 -- datafeed/render --> E3
+```
 
 ## Core Features
 
@@ -90,3 +145,4 @@ To get the project up and running locally, follow these simple steps.
   ```bash
   pnpm test
   ```
+
