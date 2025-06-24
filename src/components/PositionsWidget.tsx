@@ -43,11 +43,7 @@ const PositionsWidget = () => {
       (p) => p.symbol === position.symbol && p.side === position.side
     );
     const pnl = pnlData?.pnl ?? 0;
-    const pnlPercent = position.entryPrice
-      ? ((markPrice - position.entryPrice) / position.entryPrice) *
-        100 *
-        (position.side === 'LONG' ? 1 : -1)
-      : 0;
+    const pnlPercent = pnlData?.pnlPercent ?? 0;
     return (
       <tr
         key={position.symbol + position.side}

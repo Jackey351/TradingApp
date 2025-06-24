@@ -39,7 +39,12 @@ self.onmessage = (e: MessageEvent<CalcRequest>) => {
         (price - pos.entryPrice) *
         pos.quantity *
         (pos.side === 'LONG' ? 1 : -1);
-      return { ...pos, pnl };
+      const pnlPercent = pos.entryPrice
+        ? ((price - pos.entryPrice) / pos.entryPrice) *
+          100 *
+          (pos.side === 'LONG' ? 1 : -1)
+        : 0;
+      return { ...pos, pnl, pnlPercent };
     });
     (self as any).postMessage({ type: 'pnl', result });
   }
