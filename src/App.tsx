@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import TradingDashboard from './pages/TradingDashboard';
 import { useThemeStore } from './stores/themeStore';
 import { useExchangeStore } from './stores/exchangeStore';
+
+const TradingDashboard = lazy(() => import('./pages/TradingDashboard'));
 
 export default function App() {
   const { theme, initializeTheme } = useThemeStore();
@@ -41,15 +42,23 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-      <Routes>
-        <Route path="/" element={<TradingDashboard />} />
-      </Routes>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen">
+            <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-primary-500"></div>
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/" element={<TradingDashboard />} />
+        </Routes>
+      </Suspense>
       {showInstall && (
         <button
           className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow"
           onClick={handleInstall}
         >
-          安装到桌面
+          Install to desktop
         </button>
       )}
     </div>
