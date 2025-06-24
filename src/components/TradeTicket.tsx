@@ -154,7 +154,7 @@ const TradeTicket: React.FC<TradeTicketProps> = ({ symbol }) => {
           Sell
         </button>
       </div>
-      <form onSubmit={handleSubmit} className="space-y-4 px-4">
+      <form onSubmit={handleSubmit} className="space-y-4 px-4" data-testid="trade-form">
         <div>
           <label
             htmlFor="price"

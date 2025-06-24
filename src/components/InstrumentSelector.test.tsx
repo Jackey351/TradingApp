@@ -17,20 +17,12 @@ describe('InstrumentSelector', () => {
     render(
       <InstrumentSelector selectedPair="BTCUSDT" onPairChange={onPairChange} />
     );
-    expect(screen.getByDisplayValue('BTCUSDT')).toBeInTheDocument();
-    fireEvent.change(screen.getByDisplayValue('BTCUSDT'), {
-      target: { value: 'ETHUSDT' },
-    });
+    const select = screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    expect(select).toHaveValue('BTCUSDT');
+    expect(screen.getByText('BTC/USDT')).toBeInTheDocument();
+    expect(screen.getByText('ETH/USDT')).toBeInTheDocument();
+    fireEvent.change(select, { target: { value: 'ETHUSDT' } });
     expect(onPairChange).toHaveBeenCalledWith('ETHUSDT');
-  });
-
-  it('handles timeframe change', () => {
-    (useExchangeStore as any).mockReturnValue({ tradingPairs });
-    const onTimeframeChange = vi.fn();
-    render(
-      <InstrumentSelector selectedPair="BTCUSDT" onPairChange={vi.fn()} />
-    );
-    fireEvent.click(screen.getByText('1d'));
-    expect(onTimeframeChange).toHaveBeenCalledWith('1d');
   });
 });
