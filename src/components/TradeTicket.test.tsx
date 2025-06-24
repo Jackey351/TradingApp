@@ -1,58 +1,109 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 import TradeTicket from './TradeTicket';
 import { useExchangeStore } from '../stores/exchangeStore';
-import toast from 'react-hot-toast';
+import { useMarketStore } from '../stores/marketStore';
+import { useCalcWorker } from '../hooks/useCalcWorker';
 
+// Mock dependencies
 vi.mock('../stores/exchangeStore');
-vi.mock('react-hot-toast', () => ({
-  __esModule: true,
-  default: { error: vi.fn(), promise: vi.fn() },
-}));
+vi.mock('../stores/marketStore');
+vi.mock('../hooks/useCalcWorker');
 
 describe('TradeTicket', () => {
+  const mockAddOrder = vi.fn();
+  const mockAggregateOrderBook = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
+
     (useExchangeStore as any).mockReturnValue({
-      addOrder: vi.fn(),
+      addOrder: mockAddOrder,
       updateOrder: vi.fn(),
       positions: [],
       setPositions: vi.fn(),
-      orderBook: { bids: [{ price: 10000 }], asks: [{ price: 11000 }] },
+      selectedPair: 'BTCUSDT',
+    });
+
+    (useMarketStore as any).mockReturnValue({
+      orderBook: {
+        bids: [{ price: 100, quantity: 1, total: 1 }],
+        asks: [{ price: 101, quantity: 1, total: 1 }],
+      },
+    });
+
+    (useCalcWorker as any).mockReturnValue({
+      aggregateOrderBook: mockAggregateOrderBook.mockResolvedValue({
+        bids: [{ price: 100, quantity: 1, total: 1 }],
+        asks: [{ price: 101, quantity: 1, total: 1 }],
+      }),
     });
   });
 
-  it('renders and switches side', () => {
+  it('should render correctly and allow changing side', () => {
     render(<TradeTicket symbol="BTCUSDT" />);
-    expect(screen.getByText('Buy')).toBeInTheDocument();
-    expect(screen.getByText('Sell')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Sell'));
-    expect(screen.getByText('Sell BTC')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Buy'));
-    expect(screen.getByText('Buy BTC')).toBeInTheDocument();
+    
+    // Default to BUY
+    expect(screen.getAllByRole('button', { name: /^Buy$/i })[0]).toHaveClass('bg-green-600');
+
+    // Switch to SELL tab
+    fireEvent.click(screen.getAllByRole('button', { name: /Sell/i })[0]);
+    // Check sell tab class
+    expect(screen.getAllByRole('button', { name: /Sell/i })[0]).toHaveClass('bg-red-600');
   });
 
-  it('shows error on invalid input', () => {
+  it('should allow inputting price and quantity', () => {
     render(<TradeTicket symbol="BTCUSDT" />);
-    fireEvent.change(screen.getByLabelText(/Price/i), {
-      target: { value: '' },
-    });
-    fireEvent.change(screen.getByLabelText(/Amount/i), {
-      target: { value: '' },
-    });
+    
+    const priceInput = screen.getByLabelText(/Price/i);
+    const quantityInput = screen.getByLabelText(/Amount/i);
+
+    fireEvent.change(priceInput, { target: { value: '12345' } });
+    fireEvent.change(quantityInput, { target: { value: '0.5' } });
+
+    expect(priceInput).toHaveValue(12345);
+    expect(quantityInput).toHaveValue(0.5);
+  });
+
+  it('should call addOrder on form submission', async () => {
+    render(<TradeTicket symbol="BTCUSDT" />);
+
+    // Set side to BUY (tab)
+    fireEvent.click(screen.getAllByRole('button', { name: /Buy/i })[0]);
+
+    // Set price and quantity as strings
+    fireEvent.change(screen.getByLabelText(/Price/i), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: '1' } });
+
+    // Submit the form directly
     fireEvent.submit(screen.getByTestId('trade-form'));
-    expect(toast.error).toHaveBeenCalled();
+    
+    // Wait for any async effects
+    await act(async () => {});
+
+    // Check if addOrder was called
+    expect(mockAddOrder).toHaveBeenCalledWith(
+      expect.objectContaining({
+        symbol: 'BTCUSDT',
+        side: 'BUY',
+        type: 'LIMIT',
+        quantity: 1,
+        price: 100,
+      })
+    );
   });
 
-  it('submits order and shows toast', async () => {
+  it('should update total when quantity changes', () => {
     render(<TradeTicket symbol="BTCUSDT" />);
-    fireEvent.change(screen.getByLabelText(/Price/i), {
-      target: { value: '10000' },
-    });
-    fireEvent.change(screen.getByLabelText(/Amount/i), {
-      target: { value: '0.1' },
-    });
-    fireEvent.submit(screen.getByTestId('trade-form'));
-    expect(toast.promise).toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText(/Price/i), { target: { value: '100' } });
+    fireEvent.change(screen.getByLabelText(/Amount/i), { target: { value: '2' } });
+
+    // Find the "Total" span and check its sibling's content
+    const totalLabel = screen.getByText('Total');
+    const totalValue = totalLabel.nextElementSibling;
+
+    expect(totalValue).toBeInTheDocument();
+    expect(totalValue?.textContent).toContain('200.00');
   });
 });

@@ -13,7 +13,7 @@ vi.mock('react-virtualized-auto-sizer', () => ({
 // Mock VirtualizedList to render all items directly
 vi.mock('./VirtualizedList', () => ({
   __esModule: true,
-  default: React.forwardRef((props: any, ref) => {
+  default: React.forwardRef((props: any) => {
     const { itemCount, itemData, children } = props;
     return (
       <div>
