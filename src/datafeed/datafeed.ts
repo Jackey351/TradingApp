@@ -1,3 +1,4 @@
+import { Kline, Timeframe } from '@/types';
 import { BinanceAdapter } from '../adapters/BinanceAdapter';
 
 export interface SymbolInfo {
@@ -41,11 +42,11 @@ const configurationData = {
   symbols_types: [{ name: 'crypto', value: 'crypto' }],
 };
 
-function binanceInterval(resolution: string): string {
+function binanceInterval(resolution: string): Timeframe {
   if (resolution === '1D') return '1d';
   if (resolution === '240') return '4h';
   if (resolution === '60') return '1h';
-  return resolution + 'm';
+  return (resolution + 'm') as Timeframe;
 }
 
 const defaultPairs: SymbolInfo[] = [
@@ -129,21 +130,25 @@ export const datafeed = {
   ) => {
     const { from, to } = periodParams;
     const interval = binanceInterval(resolution);
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbolInfo.name}&interval=${interval}&startTime=${from * 1000}&endTime=${to * 1000}&limit=1000`;
     try {
-      const resp = await fetch(url);
-      const data = await resp.json();
+      const data = await adapter.getKlines(
+        symbolInfo.name,
+        interval,
+        from,
+        to,
+        1000
+      );
       if (!Array.isArray(data)) {
         onHistoryCallback([], { noData: true });
         return;
       }
-      const bars: Bar[] = data.map((k: any) => ({
-        time: k[0],
-        open: parseFloat(k[1]),
-        high: parseFloat(k[2]),
-        low: parseFloat(k[3]),
-        close: parseFloat(k[4]),
-        volume: parseFloat(k[5]),
+      const bars: Bar[] = data.map((k: Kline) => ({
+        time: k.openTime,
+        open: k.open,
+        high: k.high,
+        low: k.low,
+        close: k.close,
+        volume: k.volume,
       }));
       onHistoryCallback(bars, { noData: bars.length === 0 });
     } catch (err) {
