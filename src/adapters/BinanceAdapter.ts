@@ -241,7 +241,13 @@ export class BinanceAdapter implements ExchangeAdapter {
       const [symbolRaw, klineRaw] = klineKey.split('@');
       const symbol = symbolRaw.toUpperCase();
       const interval = klineRaw.replace('kline_', '');
-      const klines = await this.getKlines(symbol, interval as any, 500);
+      const klines = await this.getKlines(
+        symbol,
+        interval as any,
+        undefined,
+        undefined,
+        500
+      );
       const timeframe = interval;
       const callbackKey = `klines_${timeframe}`;
       const callbacks = this.callbacks.get(callbackKey) || [];
@@ -381,12 +387,14 @@ export class BinanceAdapter implements ExchangeAdapter {
   async getKlines(
     symbol: string,
     timeframe: Timeframe,
+    from?: number,
+    to?: number,
     limit: number = 500
   ): Promise<Kline[]> {
     try {
       const interval = this.mapTimeframeToBinanceInterval(timeframe);
       const data = await this.makeRequest<any[]>(
-        `/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`
+        `/klines?symbol=${symbol}&interval=${interval}${from ? `&startTime=${from * 1000}` : ''}${to ? `&endTime=${to * 1000}` : ''}&limit=${limit}`
       );
 
       return data.map((kline: any[]) => ({
